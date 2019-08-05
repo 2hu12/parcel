@@ -1,6 +1,8 @@
-import WorkerFarm from './WorkerFarm';
-import packageJson from '../package.json';
+import invariant from 'assert';
 import {registerSerializableClass} from '@parcel/utils';
+
+import {child} from './childState';
+import packageJson from '../package.json';
 
 let HANDLE_ID = 0;
 
@@ -11,7 +13,8 @@ export default class Handle {
 
   static deserialize(opts) {
     return function(...args) {
-      return WorkerFarm.callMaster({handle: opts.id, args}, true);
+      invariant(child != null);
+      return child.workerApi.callMaster({handle: opts.id, args}, true);
     };
   }
 }

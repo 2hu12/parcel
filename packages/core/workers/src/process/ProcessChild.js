@@ -11,6 +11,8 @@ import {setChild} from '../childState';
 import {Child} from '../child';
 import {serialize, deserialize} from '@parcel/utils';
 
+import '../Handle';
+
 export default class ProcessChild implements ChildImpl {
   onMessage: MessageHandler;
   onExit: ExitHandler;

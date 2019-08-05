@@ -18,8 +18,6 @@ import Handle from './Handle';
 import {child} from './childState';
 import {detectBackend} from './backend';
 
-let shared = null;
-
 type FarmOptions = {|
   maxConcurrentWorkers: number,
   maxConcurrentCallsPerWorker: number,
@@ -34,6 +32,10 @@ type HandleFunction = (...args: Array<any>) => Promise<any>;
 
 type WorkerModule = {|
   +[string]: (...args: Array<mixed>) => Promise<mixed>
+|};
+
+export type WorkerApi = {|
+  callMaster(CallRequest, ?boolean): Promise<mixed>
 |};
 
 /**
@@ -72,6 +74,19 @@ export default class WorkerFarm extends EventEmitter {
 
     this.startMaxWorkers();
   }
+
+  workerApi = {
+    callMaster: async (
+      request: CallRequest,
+      awaitResponse: boolean = true
+    ): Promise<mixed> => {
+      // $FlowFixMe
+      return this.processRequest({
+        ...request,
+        awaitResponse
+      });
+    }
+  };
 
   warmupWorker(method: string, args: Array<any>): void {
     // Workers are already stopping
@@ -114,7 +129,7 @@ export default class WorkerFarm extends EventEmitter {
         }
 
         let processedArgs = deserialize(serialize([...args, false]));
-        return this.localWorker[method](...processedArgs);
+        return this.localWorker[method](this.workerApi, ...processedArgs);
       }
     };
   }
@@ -275,7 +290,6 @@ export default class WorkerFarm extends EventEmitter {
       Array.from(this.workers.values()).map(worker => this.stopWorker(worker))
     );
     this.ending = false;
-    shared = null;
   }
 
   startMaxWorkers(): void {
@@ -299,31 +313,10 @@ export default class WorkerFarm extends EventEmitter {
     );
   }
 
-  createReverseHandle(fn: () => mixed) {
+  createReverseHandle(fn: (fn: string, args: Array<mixed>) => mixed) {
     let handle = new Handle();
     this.handles.set(handle.id, fn);
     return handle;
-  }
-
-  static async getShared(
-    farmOptions?: $Shape<FarmOptions>
-  ): Promise<WorkerFarm> {
-    // Farm options shouldn't be considered safe to overwrite
-    // and require an entire new instance to be created
-    if (
-      shared &&
-      farmOptions &&
-      farmOptions.workerPath !== shared.options.workerPath
-    ) {
-      await shared.end();
-      shared = null;
-    }
-
-    if (!shared) {
-      shared = new WorkerFarm(farmOptions);
-    }
-
-    return shared;
   }
 
   static getNumWorkers() {
@@ -332,36 +325,11 @@ export default class WorkerFarm extends EventEmitter {
       : cpuCount();
   }
 
-  static async callMaster(
-    request: CallRequest,
-    awaitResponse: boolean = true
-  ): Promise<mixed> {
-    if (child) {
-      return child.addCall(request, awaitResponse);
-    } else {
-      // $FlowFixMe
-      return (await WorkerFarm.getShared()).processRequest({
-        ...request,
-        awaitResponse
-      });
-    }
-  }
-
   static isWorker() {
     return !!child;
   }
 
   static getConcurrentCallsPerWorker() {
     return parseInt(process.env.PARCEL_MAX_CONCURRENT_CALLS, 10) || 5;
-  }
-
-  static createReverseHandle(fn: (...args: any[]) => mixed) {
-    if (WorkerFarm.isWorker()) {
-      throw new Error(
-        'Cannot call WorkerFarm.createReverseHandle() from within Worker'
-      );
-    }
-
-    return nullthrows(shared).createReverseHandle(fn);
   }
 }

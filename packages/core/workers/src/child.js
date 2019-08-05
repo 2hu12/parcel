@@ -10,6 +10,7 @@ import type {
   ChildImpl
 } from './types';
 import type {IDisposable} from '@parcel/types';
+import type {WorkerApi} from './WorkerFarm';
 
 import invariant from 'assert';
 import nullthrows from 'nullthrows';
@@ -17,6 +18,9 @@ import {inspect} from 'util';
 import Logger from '@parcel/logger';
 import {errorToJson, jsonToError} from '@parcel/utils';
 import bus from './bus';
+
+// Import this to register it with the serializer in the worker
+import './Handle';
 
 type ChildCall = WorkerRequest & {|
   resolve: (result: Promise<any> | any) => void,
@@ -34,6 +38,7 @@ export class Child {
   responseQueue: Map<number, ChildCall> = new Map();
   loggerDisposable: IDisposable;
   child: ChildImpl;
+  workerApi: WorkerApi;
 
   constructor(ChildBackend: Class<ChildImpl>) {
     this.child = new ChildBackend(
@@ -48,6 +53,15 @@ export class Child {
       bus.emit('logEvent', event);
     });
   }
+
+  workerApi = {
+    callMaster: async (
+      request: CallRequest,
+      awaitResponse: ?boolean = true
+    ): Promise<mixed> => {
+      return this.addCall(request, awaitResponse);
+    }
+  };
 
   messageListener(message: WorkerMessage): void | Promise<void> {
     if (message.type === 'response') {
@@ -97,8 +111,10 @@ export class Child {
       }
     } else {
       try {
-        // $FlowFixMe
-        result = responseFromContent(await this.module[method](...args));
+        result = responseFromContent(
+          // $FlowFixMe
+          await this.module[method](this.workerApi, ...args)
+        );
       } catch (e) {
         result = errorResponseFromError(e);
       }
@@ -129,7 +145,7 @@ export class Child {
   // Keep in mind to make sure responses to these calls are JSON.Stringify safe
   async addCall(
     request: CallRequest,
-    awaitResponse: boolean = true
+    awaitResponse: ?boolean = true
   ): Promise<mixed> {
     // $FlowFixMe
     let call: ChildCall = {
