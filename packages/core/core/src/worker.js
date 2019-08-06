@@ -14,11 +14,11 @@ import registerCoreWithSerializer from './registerCoreWithSerializer';
 registerCoreWithSerializer();
 
 export function runTransform(workerApi: WorkerApi, opts: TransformationOpts) {
-  return new Transformation(opts).run();
+  return new Transformation({workerApi, ...opts}).run();
 }
 
 export function runValidate(workerApi: WorkerApi, opts: ValidationOpts) {
-  return new Validation(opts).run();
+  return new Validation({workerApi, ...opts}).run();
 }
 
 export function runPackage(
