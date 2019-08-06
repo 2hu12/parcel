@@ -27,6 +27,10 @@ export const inputFS = new NodeFS();
 export const outputFS = new MemoryFS(workerFarm);
 export const ncp = promisify(_ncp);
 
+// Spin down the worker farm to stop it from preventing the main process from exiting
+// eslint-disable-next-line no-undef
+after(() => workerFarm.end());
+
 export const defaultConfig = {
   ...defaultConfigContents,
   filePath: require.resolve('@parcel/config-default'),
