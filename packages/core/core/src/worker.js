@@ -13,11 +13,28 @@ import registerCoreWithSerializer from './registerCoreWithSerializer';
 
 registerCoreWithSerializer();
 
-export function runTransform(workerApi: WorkerApi, opts: TransformationOpts) {
+// Remove the workerApi type from the TransformationOpts and ValidationOpts types:
+// https://github.com/facebook/flow/issues/2835
+type TransformationOptsWithoutWorkerApi = $Diff<
+  TransformationOpts,
+  {|workerApi: mixed|}
+>;
+type ValidationOptsWithoutWorkerApi = $Diff<
+  ValidationOpts,
+  {|workerApi: mixed|}
+>;
+
+export function runTransform(
+  workerApi: WorkerApi,
+  opts: TransformationOptsWithoutWorkerApi
+) {
   return new Transformation({workerApi, ...opts}).run();
 }
 
-export function runValidate(workerApi: WorkerApi, opts: ValidationOpts) {
+export function runValidate(
+  workerApi: WorkerApi,
+  opts: ValidationOptsWithoutWorkerApi
+) {
   return new Validation({workerApi, ...opts}).run();
 }
 
