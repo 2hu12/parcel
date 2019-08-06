@@ -227,10 +227,8 @@ describe('WorkerFarm', function() {
     });
 
     workerfarm.createReverseHandle(() => 42);
-    assert.equal(workerfarm.handles.length, 1);
-    assert.equal(workerfarm.handleFns.size, 1);
+    assert.equal(workerfarm.handles.size, 1);
     await workerfarm.end();
-    assert.equal(workerfarm.handles.length, 0);
-    assert.equal(workerfarm.handleFns.size, 0);
+    assert.equal(workerfarm.handles.size, 0);
   });
 });

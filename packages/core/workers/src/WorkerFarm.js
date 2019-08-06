@@ -8,6 +8,7 @@ import type {
   WorkerErrorResponse,
   BackendType
 } from './types';
+import type {HandleFunction} from './Handle';
 
 import nullthrows from 'nullthrows';
 import EventEmitter from 'events';
@@ -27,8 +28,6 @@ type FarmOptions = {|
   workerPath?: FilePath,
   backend: BackendType
 |};
-
-type HandleFunction = (...args: Array<any>) => Promise<any>;
 
 type WorkerModule = {|
   +[string]: (...args: Array<mixed>) => Promise<mixed>
@@ -50,8 +49,7 @@ export default class WorkerFarm extends EventEmitter {
   run: HandleFunction;
   warmWorkers: number = 0;
   workers: Map<number, Worker> = new Map();
-  handleFns: Map<number, (fn: string, args: Array<mixed>) => mixed> = new Map();
-  handles: Array<Handle> = [];
+  handles: Map<number, Handle> = new Map();
 
   constructor(farmOptions: $Shape<FarmOptions> = {}) {
     super();
@@ -211,10 +209,10 @@ export default class WorkerFarm extends EventEmitter {
     |} & $Shape<WorkerRequest>,
     worker?: Worker
   ): Promise<?string> {
-    let {method, args, location, awaitResponse, idx, handle} = data;
+    let {method, args, location, awaitResponse, idx, handle: handleId} = data;
     let mod;
-    if (handle) {
-      mod = nullthrows(this.handleFns.get(handle));
+    if (handleId != null) {
+      mod = nullthrows(this.handles.get(handleId)).fn;
     } else if (location) {
       // $FlowFixMe this must be dynamic
       mod = require(location);
@@ -290,11 +288,10 @@ export default class WorkerFarm extends EventEmitter {
   async end(): Promise<void> {
     this.ending = true;
 
-    for (let handle of this.handles) {
+    for (let handle of this.handles.values()) {
       handle.dispose();
     }
-    this.handles = [];
-    this.handleFns = new Map();
+    this.handles = new Map();
 
     await Promise.all(
       Array.from(this.workers.values()).map(worker => this.stopWorker(worker))
@@ -323,10 +320,9 @@ export default class WorkerFarm extends EventEmitter {
     );
   }
 
-  createReverseHandle(fn: (fn: string, args: Array<mixed>) => mixed) {
-    let handle = new Handle({workerApi: this.workerApi});
-    this.handleFns.set(handle.id, fn);
-    this.handles.push(handle);
+  createReverseHandle(fn: HandleFunction) {
+    let handle = new Handle({fn, workerApi: this.workerApi});
+    this.handles.set(handle.id, handle);
     return handle;
   }
 
