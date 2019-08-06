@@ -289,6 +289,13 @@ export default class WorkerFarm extends EventEmitter {
 
   async end(): Promise<void> {
     this.ending = true;
+
+    for (let handle of this.handles) {
+      handle.dispose();
+    }
+    this.handles = [];
+    this.handleFns = new Map();
+
     await Promise.all(
       Array.from(this.workers.values()).map(worker => this.stopWorker(worker))
     );

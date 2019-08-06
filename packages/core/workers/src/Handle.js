@@ -27,6 +27,10 @@ export default class Handle {
     }
   }
 
+  dispose() {
+    handleIdToWorkerApi.delete(this.id);
+  }
+
   static deserialize(opts: {|id: number|}) {
     return function(...args: Array<mixed>) {
       let workerApi = child
