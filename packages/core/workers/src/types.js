@@ -9,11 +9,16 @@ export type BundlerOptions = {|
   env: ?{[string]: ?string}
 |};
 
-export type CallRequest = {|
-  args: $ReadOnlyArray<mixed>,
-  location: string,
-  method?: string
-|};
+export type CallRequest =
+  | {|
+      args: $ReadOnlyArray<mixed>,
+      location: string,
+      method?: string
+    |}
+  | {|
+      args: $ReadOnlyArray<mixed>,
+      handle: number
+    |};
 
 export type WorkerRequest = {|
   args: Array<any>,

@@ -50,6 +50,7 @@ export class MemoryFS implements FileSystem {
 
     return {
       id: this.id,
+      // $FlowFixMe
       handle: this.handle
     };
   }
