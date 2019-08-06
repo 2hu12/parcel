@@ -1,6 +1,7 @@
 // @flow strict-local
 
 import type {ParcelOptions, ReporterEvent} from '@parcel/types';
+import type WorkerFarm from '@parcel/workers';
 
 import {bundleToInternalBundle, NamedBundle} from './public/Bundle';
 import {bus} from '@parcel/workers';
@@ -9,7 +10,8 @@ import logger from '@parcel/logger';
 
 type Opts = {|
   config: ParcelConfig,
-  options: ParcelOptions
+  options: ParcelOptions,
+  workerFarm: WorkerFarm
 |};
 
 export default class ReporterRunner {

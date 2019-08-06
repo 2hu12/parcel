@@ -76,15 +76,18 @@ export default class Parcel {
       resolvedOptions
     );
     this.#config = config;
+    this.#farm = this.#initialOptions.workerFarm ?? createWorkerFarm();
 
     this.#bundlerRunner = new BundlerRunner({
       options: resolvedOptions,
-      config
+      config,
+      workerFarm: this.#farm
     });
 
     this.#reporterRunner = new ReporterRunner({
       config,
-      options: resolvedOptions
+      options: resolvedOptions,
+      workerFarm: this.#farm
     });
 
     this.#assetGraphBuilder = new AssetGraphBuilder();
@@ -92,14 +95,9 @@ export default class Parcel {
       options: resolvedOptions,
       config,
       entries: resolvedOptions.entries,
-      targets: resolvedOptions.targets
+      targets: resolvedOptions.targets,
+      workerFarm: this.#farm
     });
-
-    this.#farm = await WorkerFarm.getShared({
-      workerPath: require.resolve('./worker')
-    });
-
-    await this.#assetGraphBuilder.initFarm();
 
     this.#runPackage = this.#farm.createHandle('runPackage');
     this.#initialized = true;
@@ -112,13 +110,12 @@ export default class Parcel {
     }
 
     let result = await this.build(startTime);
-
-    let resolvedOptions = nullthrows(this.#resolvedOptions);
     if (result.type === 'buildSuccess') {
       await this.#assetGraphBuilder.writeToCache();
     }
 
-    if (resolvedOptions.killWorkers !== false) {
+    if (!this.#initialOptions.workerFarm) {
+      // If there wasn't a workerFarm passed it, we created it. End the farm.
       await this.#farm.end();
     }
 
@@ -341,3 +338,9 @@ export class BuildError extends Error {
 }
 
 export {default as Asset} from './Asset';
+
+export function createWorkerFarm() {
+  return new WorkerFarm({
+    workerPath: require.resolve('./worker')
+  });
+}

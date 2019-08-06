@@ -161,6 +161,10 @@ async function run(entries: Array<string>, command: any) {
 }
 
 async function normalizeOptions(command): Promise<InitialParcelOptions> {
+  const {createWorkerFarm} = require('@parcel/core');
+
+  const workerFarm = createWorkerFarm();
+
   if (command.name() === 'build') {
     process.env.NODE_ENV = process.env.NODE_ENV || 'production';
   } else {
@@ -219,6 +223,7 @@ async function normalizeOptions(command): Promise<InitialParcelOptions> {
     serve,
     targets: command.target.length > 0 ? command.target : null,
     autoinstall: command.autoinstall !== false,
-    logLevel: command.logLevel
+    logLevel: command.logLevel,
+    workerFarm
   };
 }

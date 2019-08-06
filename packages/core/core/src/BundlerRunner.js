@@ -8,6 +8,7 @@ import type {
   RootNode
 } from './types';
 import type ParcelConfig from './ParcelConfig';
+import type WorkerFarm from '@parcel/workers';
 
 import assert from 'assert';
 import path from 'path';
@@ -30,18 +31,21 @@ import {localResolve} from '@parcel/local-require';
 
 type Opts = {|
   options: ParcelOptions,
-  config: ParcelConfig
+  config: ParcelConfig,
+  workerFarm: WorkerFarm
 |};
 
 export default class BundlerRunner {
   options: ParcelOptions;
   config: ParcelConfig;
   cache: Cache;
+  farm: WorkerFarm;
 
   constructor(opts: Opts) {
     this.options = opts.options;
     this.config = opts.config;
     this.cache = new Cache(this.options.outputFS, this.options.cacheDir);
+    this.farm = opts.workerFarm;
   }
 
   async bundle(graph: AssetGraph): Promise<InternalBundleGraph> {
@@ -192,7 +196,8 @@ export default class BundlerRunner {
           code,
           filePath,
           env: bundle.env
-        }
+        },
+        workerFarm: this.farm
       });
 
       // build a graph of just the transformed asset

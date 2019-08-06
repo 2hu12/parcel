@@ -8,7 +8,7 @@ import type {
 } from '@parcel/types';
 
 import invariant from 'assert';
-import Parcel from '@parcel/core';
+import Parcel, {createWorkerFarm} from '@parcel/core';
 import defaultConfigContents from '@parcel/config-default';
 import assert from 'assert';
 import vm from 'vm';
@@ -22,8 +22,9 @@ import _ncp from 'ncp';
 import _chalk from 'chalk';
 import resolve from 'resolve';
 
+const workerFarm = createWorkerFarm();
 export const inputFS = new NodeFS();
-export const outputFS = new MemoryFS();
+export const outputFS = new MemoryFS(workerFarm);
 export const ncp = promisify(_ncp);
 
 export const defaultConfig = {
@@ -78,10 +79,10 @@ export function bundler(
     entries,
     cache: false,
     logLevel: 'none',
-    killWorkers: false,
     defaultConfig,
     inputFS,
     outputFS,
+    workerFarm,
     ...opts
   });
 }

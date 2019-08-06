@@ -1,4 +1,5 @@
 {
   "require": ["@parcel/babel-register", "./mochaSetup.js"],
-  "timeout": 50000
+  "timeout": 50000,
+  "exit": true
 }

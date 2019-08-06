@@ -22,8 +22,11 @@ export class MemoryFS implements FileSystem {
   files: Map<FilePath, File>;
   id: number;
   handle: any;
-  constructor() {
+  farm: WorkerFarm;
+
+  constructor(workerFarm: WorkerFarm) {
     this.dirs = new Map([['/', new Directory()]]);
+    this.farm = workerFarm;
     this.files = new Map();
     this.id = id++;
     instances.set(this.id, this);
@@ -37,8 +40,8 @@ export class MemoryFS implements FileSystem {
 
   serialize(): SerializedMemoryFS {
     if (!this.handle) {
-      this.handle = WorkerFarm.createReverseHandle(
-        async (fn: string, args: any[]) => {
+      this.handle = this.farm.createReverseHandle(
+        async (fn: string, args: Array<mixed>) => {
           // $FlowFixMe
           return this[fn](...args);
         }
@@ -441,6 +444,8 @@ class WorkerFS extends MemoryFS {
   handle: FSHandle;
 
   constructor(id: number, handle: FSHandle) {
+    // TODO Make this not a subclass
+    // $FlowFixMe
     super();
     this.id = id;
     this.handle = handle;

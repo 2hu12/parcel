@@ -62,12 +62,15 @@ export default async function resolveOptions(
   let targetResolver = new TargetResolver(inputFS);
   let targets = await targetResolver.resolve(rootDir, cacheDir, initialOptions);
 
+  // eslint-disable-next-line no-unused-vars
+  let {workerFarm, ...includedOptions} = initialOptions;
+
   // $FlowFixMe
   return {
     env:
       initialOptions.env ??
       (await loadDotEnv(inputFS, path.join(rootDir, 'index'))),
-    ...initialOptions,
+    ...includedOptions,
     cacheDir,
     entries,
     rootDir,

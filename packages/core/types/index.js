@@ -3,6 +3,7 @@
 import type {Readable} from 'stream';
 import type SourceMap from '@parcel/source-map';
 import type {FileSystem} from '@parcel/fs';
+import type WorkerFarm from '@parcel/workers';
 
 import type {AST as _AST, Config as _Config} from './unsafe';
 
@@ -145,27 +146,25 @@ export type PackageJSON = {
 export type LogLevel = 'none' | 'error' | 'warn' | 'info' | 'verbose';
 
 export type InitialParcelOptions = {|
-  entries?: FilePath | Array<FilePath>,
-  rootDir?: FilePath,
-  config?: ResolvedParcelConfigFile,
-  defaultConfig?: ResolvedParcelConfigFile,
-  env?: {[string]: ?string},
-  targets?: ?(Array<string> | {+[string]: TargetDescriptor}),
-
+  autoinstall?: boolean,
   cache?: boolean,
   cacheDir?: FilePath,
-  killWorkers?: boolean,
-  mode?: 'development' | 'production' | string,
-  minify?: boolean,
-  scopeHoist?: boolean,
-  sourceMaps?: boolean,
+  config?: ResolvedParcelConfigFile,
+  defaultConfig?: ResolvedParcelConfigFile,
+  entries?: FilePath | Array<FilePath>,
+  env?: {[string]: ?string},
   hot?: ServerOptions | false,
-  serve?: ServerOptions | false,
-  autoinstall?: boolean,
-  logLevel?: LogLevel,
-
   inputFS?: FileSystem,
-  outputFS?: FileSystem
+  logLevel?: LogLevel,
+  minify?: boolean,
+  mode?: 'development' | 'production' | string,
+  outputFS?: FileSystem,
+  rootDir?: FilePath,
+  scopeHoist?: boolean,
+  serve?: ServerOptions | false,
+  sourceMaps?: boolean,
+  targets?: ?(Array<string> | {+[string]: TargetDescriptor}),
+  workerFarm?: WorkerFarm
 
   // contentHash
   // throwErrors
@@ -174,16 +173,26 @@ export type InitialParcelOptions = {|
 |};
 
 export type ParcelOptions = {|
-  ...InitialParcelOptions,
+  autoinstall?: boolean,
+  cache?: boolean,
   cacheDir: FilePath,
+  config?: ResolvedParcelConfigFile,
+  defaultConfig?: ResolvedParcelConfigFile,
   entries: Array<FilePath>,
-  logLevel: LogLevel,
-  rootDir: FilePath,
-  targets: Array<Target>,
-  projectRoot: FilePath,
-  lockFile: ?FilePath,
+  env?: {[string]: ?string},
+  hot?: ServerOptions | false,
   inputFS: FileSystem,
-  outputFS: FileSystem
+  lockFile: ?FilePath,
+  logLevel: LogLevel,
+  minify?: boolean,
+  mode?: 'development' | 'production' | string,
+  outputFS: FileSystem,
+  projectRoot: FilePath,
+  rootDir: FilePath,
+  scopeHoist?: boolean,
+  serve?: ServerOptions | false,
+  sourceMaps?: boolean,
+  targets: Array<Target>
 |};
 
 export type ServerOptions = {|
